@@ -12,17 +12,6 @@ package ‘dplyr’ successfully unpacked and MD5 sums checked
 The downloaded binary packages are in
 	C:\Users\Admin\AppData\Local\Temp\Rtmp80SBrS\downloaded_packages
 > library(dplyr)
-
-Attaching package: ‘dplyr’
-
-The following objects are masked from ‘package:stats’:
-
-    filter, lag
-
-The following objects are masked from ‘package:base’:
-
-    intersect, setdiff, setequal, union
-
 > filename <- "getdata_projectfiles_UCIHARDataset.zip"
 > if (!file.exists(filename)){
 +     fileURL <- "https://d396qusza40orc.cloudfront.net/getdata%2Fprojectfiles%2FUCI%20HAR%20Dataset.zip"
