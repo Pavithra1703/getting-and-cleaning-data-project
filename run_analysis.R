@@ -1,70 +1,104 @@
-> setwd("C:/Users/Admin/Desktop/UCIHARDataset")
-> install.packages("dplyr")
-WARNING: Rtools is required to build R packages but is not currently installed. Please download and install the appropriate version of Rtools before proceeding:
+#******************************************************************
+#Step 0. Downloading and unzipping dataset
+#******************************************************************
 
-https://cran.rstudio.com/bin/windows/Rtools/
-trying URL 'https://cran.rstudio.com/bin/windows/contrib/3.6/dplyr_1.0.0.zip'
-Content type 'application/zip' length 1523044 bytes (1.5 MB)
-downloaded 1.5 MB
+if(!file.exists("./data")){dir.create("./data")}
+#Here are the data for the project:
+fileUrl <- "https://d396qusza40orc.cloudfront.net/getdata%2Fprojectfiles%2FUCI%20HAR%20Dataset.zip"
+download.file(fileUrl,destfile="./data/Dataset.zip")
 
-package ‘dplyr’ successfully unpacked and MD5 sums checked
+# Unzip dataSet to /data directory
+unzip(zipfile="./data/Dataset.zip",exdir="./data")
 
-The downloaded binary packages are in
-	C:\Users\Admin\AppData\Local\Temp\Rtmp80SBrS\downloaded_packages
-> library(dplyr)
-> filename <- "getdata_projectfiles_UCIHARDataset.zip"
-> if (!file.exists(filename)){
-+     fileURL <- "https://d396qusza40orc.cloudfront.net/getdata%2Fprojectfiles%2FUCI%20HAR%20Dataset.zip"
-+     download.file(fileURL, filename, method="curl")
-+ }  
-> if (!file.exists(filename)){
-+     fileURL <- "https://d396qusza40orc.cloudfront.net/getdata%2Fprojectfiles%2FUCI%20HAR%20Dataset.zip"
-+     download.file(fileURL, filename, method="curl")
-+ }  
-> features <- read.table("UCI HAR Dataset/features.txt", col.names = c("n","functions"))
-> 
-> activities <- read.table("UCI HAR Dataset/activity_labels.txt", col.names = c("code", "activity"))
-> subject_test <- read.table("UCI HAR Dataset/test/subject_test.txt", col.names = "subject")
-> x_test <- read.table("UCI HAR Dataset/test/X_test.txt", col.names = features$functions)
-> y_test <- read.table("UCI HAR Dataset/test/y_test.txt", col.names = "code")
-> subject_train <- read.table("UCI HAR Dataset/train/subject_train.txt", col.names = "subject")
-> x_train <- read.table("UCI HAR Dataset/train/X_train.txt", col.names = features$functions)
-> y_train <- read.table("UCI HAR Dataset/train/y_train.txt", col.names = "code")
-> X <- rbind(x_train, x_test)
-> Y <- rbind(y_train, y_test)
-> Subject <- rbind(subject_train, subject_test)
-> Merged_Data <- cbind(Subject, Y, X)
-> TidyData <- Merged_Data %>% select(subject, code, contains("mean"), contains("std"))
-> TidyData$code <- activities[TidyData$code, 2]
-> names(TidyData)[2] = "activity"
-> names(TidyData)<-gsub("Acc", "Accelerometer", names(TidyData))
-> names(TidyData)<-gsub("Gyro", "Gyroscope", names(TidyData))
-> names(TidyData)<-gsub("BodyBody", "Body", names(TidyData))
-> names(TidyData)<-gsub("Mag", "Magnitude", names(TidyData))
-> names(TidyData)<-gsub("^t", "Time", names(TidyData))
-> names(TidyData)<-gsub("^f", "Frequency", names(TidyData))
-> names(TidyData)<-gsub("tBody", "TimeBody", names(TidyData))
-> names(TidyData)<-gsub("-mean()", "Mean", names(TidyData), ignore.case = TRUE)
-> names(TidyData)<-gsub("-std()", "STD", names(TidyData), ignore.case = TRUE)
-> names(TidyData)<-gsub("-freq()", "Frequency", names(TidyData), ignore.case = TRUE)
-> names(TidyData)<-gsub("angle", "Angle", names(TidyData))
-> names(TidyData)<-gsub("gravity", "Gravity", names(TidyData))
-> FinalData <- TidyData %>%
-+     group_by(subject, activity) %>%
-+     summarise_all(funs(mean))
-Warning message:
-`funs()` is deprecated as of dplyr 0.8.0.
-Please use a list of either functions or lambdas: 
+#You should create one R script called run_analysis.R that does the following.
 
-  # Simple named list: 
-  list(mean = mean, median = median)
+#******************************************************************
+#Step 1.Merges the training and the test sets to create one data set.
+#******************************************************************
 
-  # Auto named with `tibble::lst()`: 
-  tibble::lst(mean, median)
+# 1.1 Reading files
 
-  # Using lambdas
-  list(~ mean(., trim = .2), ~ median(., na.rm = TRUE))
-This warning is displayed once every 8 hours.
-Call `lifecycle::last_warnings()` to see where this warning was generated. 
-> write.table(FinalData, "FinalData.txt", row.name=FALSE)
-> str(FinalData)
+# 1.1.1  Reading trainings tables:
+
+x_train <- read.table("./data/UCI HAR Dataset/train/X_train.txt")
+y_train <- read.table("./data/UCI HAR Dataset/train/y_train.txt")
+subject_train <- read.table("./data/UCI HAR Dataset/train/subject_train.txt")
+
+# 1.1.2 Reading testing tables:
+x_test <- read.table("./data/UCI HAR Dataset/test/X_test.txt")
+y_test <- read.table("./data/UCI HAR Dataset/test/y_test.txt")
+subject_test <- read.table("./data/UCI HAR Dataset/test/subject_test.txt")
+
+# 1.1.3 Reading feature vector:
+features <- read.table('./data/UCI HAR Dataset/features.txt')
+
+# 1.1.4 Reading activity labels:
+activityLabels = read.table('./data/UCI HAR Dataset/activity_labels.txt')
+
+# 1.2 Assigning column names:
+
+colnames(x_train) <- features[,2]
+colnames(y_train) <-"activityId"
+colnames(subject_train) <- "subjectId"
+
+colnames(x_test) <- features[,2] 
+colnames(y_test) <- "activityId"
+colnames(subject_test) <- "subjectId"
+
+colnames(activityLabels) <- c('activityId','activityType')
+
+#1.3 Merging all data in one set:
+
+mrg_train <- cbind(y_train, subject_train, x_train)
+mrg_test <- cbind(y_test, subject_test, x_test)
+setAllInOne <- rbind(mrg_train, mrg_test)
+
+#dim(setAllInOne)
+#[1] 10299   563
+
+#******************************************************************
+#Step 2.-Extracts only the measurements on the mean and standard deviation for each measurement.
+#******************************************************************
+
+#2.1 Reading column names:
+
+colNames <- colnames(setAllInOne)
+
+#2.2 Create vector for defining ID, mean and standard deviation:
+
+mean_and_std <- (grepl("activityId" , colNames) | 
+                   grepl("subjectId" , colNames) | 
+                   grepl("mean.." , colNames) | 
+                   grepl("std.." , colNames) 
+)
+
+#2.3 Making nessesary subset from setAllInOne:
+
+setForMeanAndStd <- setAllInOne[ , mean_and_std == TRUE]
+
+#******************************************************************
+#Step 3. Uses descriptive activity names to name the activities in the data set
+#******************************************************************
+
+setWithActivityNames <- merge(setForMeanAndStd, activityLabels,
+                              by='activityId',
+                              all.x=TRUE)
+
+#******************************************************************
+#Step 4. Appropriately labels the data set with descriptive variable names.
+#******************************************************************
+
+#Done in previous steps, see 1.3,2.2 and 2.3!
+
+#******************************************************************
+#Step 5. From the data set in step 4, creates a second, independent tidy data set with the average of each variable for each activity and each subject.
+#******************************************************************
+
+#5.1 Making a second tidy data set
+
+secTidySet <- aggregate(. ~subjectId + activityId, setWithActivityNames, mean)
+secTidySet <- secTidySet[order(secTidySet$subjectId, secTidySet$activityId),]
+
+#5.2 Writing second tidy data set in txt file
+
+write.table(secTidySet, "secTidySet.txt", row.name=FALSE)
